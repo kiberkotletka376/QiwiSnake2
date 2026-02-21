@@ -3,38 +3,35 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04  # Фиксируем старую добрую Ubuntu, где 3.8 роднее
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      - name: Install System Dependencies
+      - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk
+          # Ставим Java 17 (нужна для новых Android SDK) и системные либы
+          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev openjdk-17-jdk
           pip install --upgrade pip
-          pip install buildozer cython Kivy
+          pip install buildozer cython==0.29.33 Kivy  # Фиксируем версию Cython для 3.8
 
-      - name: Pre-install Android SDK Tools
+      - name: Accept Android Licenses
         run: |
-          # Автоматически принимаем все лицензии Android
+          # Это самое важное, чтобы не было "Aidl not found"
           mkdir -p ~/.android && touch ~/.android/repositories.cfg
           yes | buildozer android debug || true
-          
-      - name: Build APK with Buildozer
-        run: |
-          # Если файла spec нет, создаем его
-          if [ ! -f buildozer.spec ]; then buildozer init; fi
-          # Запуск сборки с полным логом
-          buildozer -v android debug
+
+      - name: Final Build
+        run: buildozer -v android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: QiwiSnake-App
+          name: QiwiSnake-APK
           path: bin/*.apk
