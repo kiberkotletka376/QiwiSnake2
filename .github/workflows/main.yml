@@ -22,9 +22,13 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # Принимаем все лицензии Android SDK автоматически
+          # 1. Генерируем конфиг, если его нет
+          if [ ! -f buildozer.spec ]; then buildozer init; fi
+          
+          # 2. Магия: автоматически принимаем все лицензии Android SDK
           yes | buildozer android debug || true
-          # Запускаем финальную сборку
+          
+          # 3. Основная сборка
           buildozer -v android debug
 
       - name: Upload APK
