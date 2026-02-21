@@ -4,7 +4,6 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -14,20 +13,23 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Buildozer dependencies
+      - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          # Убрали libtinfo5, добавили libtinfo6 и другие нужные пакеты
+          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
           pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer cython Kivy
 
       - name: Build with Buildozer
-        run: buildozer android debug
-        # Если buildozer.spec нет в репозитории, эта команда создаст ошибку.
-        # В таком случае сначала запустите 'buildozer init' локально и загрузите .spec файл.
+        run: |
+          # Если файла spec нет, создаем его (на случай ошибки)
+          if [ ! -f buildozer.spec ]; then buildozer init; fi
+          # Запуск сборки в автоматическом режиме
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QiwiSnake-APK
+          name: QiwiSnake-App
           path: bin/*.apk
