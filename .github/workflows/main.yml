@@ -6,30 +6,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Используем свежую версию
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.8'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt update
-          # Добавляем openjdk-17-jdk и исправляем пакет libtinfo
           sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev openjdk-17-jdk
           pip install --upgrade pip
           pip install buildozer cython Kivy
 
-      - name: Build with Buildozer
+      - name: Pre-install Android SDK Tools
         run: |
-          # 1. Создаем конфиг, если его вдруг нет
-          if [ ! -f buildozer.spec ]; then buildozer init; fi
-          
-          # 2. ПРИНИМАЕМ ЛИЦЕНЗИИ (это уберет ошибку Aidl not found)
+          # Автоматически принимаем все лицензии Android
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
           yes | buildozer android debug || true
           
-          # 3. Запускаем основную сборку
+      - name: Build APK with Buildozer
+        run: |
+          # Если файла spec нет, создаем его
+          if [ ! -f buildozer.spec ]; then buildozer init; fi
+          # Запуск сборки с полным логом
           buildozer -v android debug
 
       - name: Upload APK
